@@ -1,4 +1,11 @@
+import os
+import sys
+
 import streamlit as st
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 from src.core.config import APP_TITLE, DEFAULT_OPENAI_API_KEY
 from src.core.state import _init_state

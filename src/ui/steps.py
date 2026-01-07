@@ -220,6 +220,12 @@ def _render_step_pairs(
 def _render_step_template_excel() -> None:
     st.header("Step 4: Template-Mapped Excel")
     idx = st.session_state.pair_index
+    if not st.session_state.pair_template_excels:
+        st.info("Save outputs to generate the template-mapped Excel.")
+        return
+    if idx >= len(st.session_state.pair_template_excels):
+        st.info("Save outputs to generate the template-mapped Excel.")
+        return
     if st.session_state.pair_template_excels[idx]:
         st.download_button(
             "Download Template Excel",
