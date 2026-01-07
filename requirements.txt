@@ -1,0 +1,9 @@
+streamlit
+openai
+langchain
+langchain-openai
+pandas
+docling
+qdrant-client
+python-dotenv
+openpyxl
