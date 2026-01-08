@@ -66,11 +66,22 @@ def _render_step_upload() -> None:
 
 
 # Step 2: Generate and edit Common JSON.
-def _render_step_common_json(api_key: str, common_prompt_text: str) -> None:
+def _render_step_common_json(
+    provider: str,
+    api_key: str,
+    model_name: str,
+    base_url: str,
+    common_prompt_text: str,
+) -> None:
     st.header("Step 2: Generate Common JSON")
     if st.button("Generate Common JSON"):
         st.session_state.common_json = _generate_common_json(
-            api_key, common_prompt_text, st.session_state.md_text
+            provider,
+            api_key,
+            model_name,
+            base_url,
+            common_prompt_text,
+            st.session_state.md_text,
         )
         st.session_state.pair_index = 0
         st.session_state.pair_outputs = []
@@ -103,7 +114,10 @@ def _render_step_common_json(api_key: str, common_prompt_text: str) -> None:
 
 # Step 3: Process each client-partner pair.
 def _render_step_pairs(
+    provider: str,
     api_key: str,
+    model_name: str,
+    base_url: str,
     common_prompt_text: str,
     pair_prompt_id: str,
     pair_prompt_text: str,
@@ -136,6 +150,7 @@ def _render_step_pairs(
                 excel_bytes,
                 file_name=f"pair_{idx + 1}_output.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=f"download_excel_pair_{idx}",
             )
         else:
             st.info("Generate output to enable Excel download.")
@@ -152,7 +167,7 @@ def _render_step_pairs(
         st.write("Actions")
         if st.button("Generate Pair Output"):
             st.session_state.pair_chat[idx] = user_note
-            if user_note.strip():
+            if user_note.strip() and provider.strip().lower() == "openai" and api_key:
                 _qdrant_upsert_history(
                     api_key,
                     agreement_key,
@@ -161,14 +176,23 @@ def _render_step_pairs(
                     user_note,
                 )
             st.session_state.pair_outputs[idx] = _generate_pair_output(
-                api_key, pair_prompt_text, pair, user_note
+                provider,
+                api_key,
+                model_name,
+                base_url,
+                pair_prompt_text,
+                pair,
+                user_note,
             )
         if st.button("Generate / Regenerate"):
             if not st.session_state.md_text:
                 st.warning("Upload and convert a file before regenerating.")
             else:
                 st.session_state.common_json = _generate_common_json(
+                    provider,
                     api_key,
+                    model_name,
+                    base_url,
                     common_prompt_text,
                     st.session_state.md_text,
                     user_note,
@@ -193,6 +217,7 @@ def _render_step_pairs(
                 st.session_state.pair_template_excels[idx],
                 file_name=f"pair_{idx + 1}_template.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=f"download_template_excel_pair_{idx}",
             )
 
     output = st.session_state.pair_outputs[idx]

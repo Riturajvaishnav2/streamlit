@@ -2,6 +2,8 @@ import io
 import os
 from typing import Any, Dict
 
+import json
+
 import pandas as pd
 
 
@@ -15,14 +17,18 @@ def _output_to_excel_bytes(output: Dict[str, Any]) -> bytes:
                 df = pd.json_normalize(agreements)
             else:
                 df = pd.DataFrame()
+            df = _stringify_complex_cells(df)
             df.to_excel(writer, sheet_name="agreements", index=False)
             metadata = output.get("metadata", {})
             if metadata:
-                pd.DataFrame([metadata]).to_excel(
+                df_meta = pd.DataFrame([metadata])
+                df_meta = _stringify_complex_cells(df_meta)
+                df_meta.to_excel(
                     writer, sheet_name="metadata", index=False
                 )
         else:
             df = pd.json_normalize(output)
+            df = _stringify_complex_cells(df)
             df.to_excel(writer, sheet_name="output", index=False)
     return buffer.getvalue()
 
@@ -62,6 +68,7 @@ def _output_to_template_excel_bytes(output: Dict[str, Any]) -> bytes:
     if isinstance(agreements, list):
         ws = workbook.create_sheet("agreements")
         df = pd.json_normalize(agreements)
+        df = _stringify_complex_cells(df)
         if not df.empty:
             _write_dataframe_to_sheet(ws, df)
 
@@ -69,8 +76,18 @@ def _output_to_template_excel_bytes(output: Dict[str, Any]) -> bytes:
     if isinstance(metadata, dict) and metadata:
         ws = workbook.create_sheet("metadata")
         df = pd.DataFrame([metadata])
+        df = _stringify_complex_cells(df)
         _write_dataframe_to_sheet(ws, df)
 
     buffer = io.BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()
+
+
+def _stringify_complex_cells(df: pd.DataFrame) -> pd.DataFrame:
+    def _stringify(value: Any) -> Any:
+        if isinstance(value, (list, dict)):
+            return json.dumps(value, ensure_ascii=True)
+        return value
+
+    return df.applymap(_stringify)

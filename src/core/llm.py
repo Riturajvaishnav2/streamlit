@@ -7,14 +7,48 @@ from src.core.json_utils import _parse_json
 
 
 # Invoke the LLM with system/user messages.
-def _call_llm(api_key: str, system_prompt: str, user_content: str) -> str:
-    model = ChatOpenAI(temperature=0.2, api_key=api_key)
-    response = model.invoke(
-        [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ]
-    )
+def _call_llm(
+    provider: str,
+    api_key: str,
+    model_name: str,
+    base_url: str,
+    system_prompt: str,
+    user_content: str,
+) -> str:
+    provider_key = provider.strip().lower()
+    if provider_key == "ollama":
+        try:
+            from langchain_ollama import ChatOllama
+        except Exception as exc:
+            raise RuntimeError(
+                "Ollama provider requires langchain-ollama to be installed."
+            ) from exc
+        ollama_base_url = base_url.rstrip("/")
+        if ollama_base_url.endswith("/v1"):
+            ollama_base_url = ollama_base_url[:-3]
+        model = ChatOllama(
+            temperature=0.2,
+            base_url=ollama_base_url,
+            model=model_name,
+        )
+    elif provider_key == "local":
+        model = ChatOpenAI(
+            temperature=0.2,
+            api_key=api_key or "local",
+            model=model_name,
+            base_url=base_url,
+        )
+    else:
+        model = ChatOpenAI(temperature=0.2, api_key=api_key, model=model_name)
+    try:
+        response = model.invoke(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ]
+        )
+    except Exception as exc:
+        raise RuntimeError(f"LLM request failed: {exc}") from exc
     return response.content
 
 
@@ -128,18 +162,29 @@ def _mock_pair_output(pair: Dict[str, Any]) -> Dict[str, Any]:
 
 # Generate common JSON from Markdown (plus optional note).
 def _generate_common_json(
+    provider: str,
     api_key: str,
+    model_name: str,
+    base_url: str,
     prompt: str,
     md_text: str,
     user_note: str = "",
 ) -> Dict[str, Any]:
-    if not api_key:
+    provider_key = provider.strip().lower()
+    if provider_key == "openai" and not api_key:
         return _mock_common_json(md_text)
+    if provider_key in {"local", "ollama"} and not base_url.strip():
+        return {"error": "Local LLM base URL is required."}
+    if provider_key in {"local", "ollama"} and not model_name.strip():
+        return {"error": "Local LLM model name is required."}
     if user_note.strip():
         user_content = f"{md_text}\n\nRegeneration notes:\n{user_note.strip()}"
     else:
         user_content = md_text
-    response = _call_llm(api_key, prompt, user_content)
+    try:
+        response = _call_llm(provider, api_key, model_name, base_url, prompt, user_content)
+    except RuntimeError as exc:
+        return {"error": str(exc)}
     parsed = _parse_json(response)
     if not parsed:
         return {"error": "LLM response was not valid JSON.", "raw": response}
@@ -154,15 +199,26 @@ def _generate_common_json(
 
 # Generate one agreement output for the current pair.
 def _generate_pair_output(
+    provider: str,
     api_key: str,
+    model_name: str,
+    base_url: str,
     prompt: str,
     pair: Dict[str, Any],
     user_note: str = "",
 ) -> Dict[str, Any]:
-    if not api_key:
+    provider_key = provider.strip().lower()
+    if provider_key == "openai" and not api_key:
         return _mock_pair_output(pair)
+    if provider_key in {"local", "ollama"} and not base_url.strip():
+        return {"error": "Local LLM base URL is required."}
+    if provider_key in {"local", "ollama"} and not model_name.strip():
+        return {"error": "Local LLM model name is required."}
     user_content = json.dumps({"pair": pair, "note": user_note}, indent=2)
-    response = _call_llm(api_key, prompt, user_content)
+    try:
+        response = _call_llm(provider, api_key, model_name, base_url, prompt, user_content)
+    except RuntimeError as exc:
+        return {"error": str(exc)}
     parsed = _parse_json(response)
     if not parsed:
         return {"error": "LLM response was not valid JSON.", "raw": response}

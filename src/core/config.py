@@ -17,6 +17,13 @@ if load_dotenv:
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "prompt_history")
 QDRANT_TOP_K = int(os.getenv("QDRANT_TOP_K", "20"))
 DEFAULT_OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+DEFAULT_LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+DEFAULT_LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
+DEFAULT_LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama3")
+DEFAULT_LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", "")
+DEFAULT_OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
 # Default system prompt for extracting agreements from Markdown.
 DEFAULT_COMMON_PROMPT = """You are an expert data extraction assistant.

@@ -7,7 +7,7 @@ TI/TO/IoT and loader outputs with human-in-the-loop edits.
 ## Prerequisites
 
 - Python 3.9+
-- OpenAI API key
+- LLM access: OpenAI API key, a local OpenAI-compatible server, or Ollama
 - Docling (for converting uploads to Markdown/JSONL)
 - Qdrant (optional, for prompt history storage)
 
@@ -23,6 +23,13 @@ Create a `.env` file (optional) to set defaults:
 
 ```bash
 OPENAI_API_KEY=your-key
+OPENAI_MODEL=gpt-3.5-turbo
+LLM_PROVIDER=openai
+LOCAL_LLM_BASE_URL=http://localhost:11434/v1
+LOCAL_LLM_MODEL=llama3
+LOCAL_LLM_API_KEY=
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
 QDRANT_URL=https://your-qdrant-host
 QDRANT_API_KEY=your-qdrant-key
 QDRANT_COLLECTION=prompt_history
@@ -34,6 +41,12 @@ QDRANT_TOP_K=20
 ```bash
 streamlit run src/streamlit_app.py
 ```
+
+In the app sidebar, choose the LLM provider:
+
+- OpenAI: set the API key and model name.
+- Local (OpenAI-compatible): set the base URL and model name (API key optional).
+- Ollama (local): set the Ollama base URL (no /v1) and model name.
 
 ## Workflow
 

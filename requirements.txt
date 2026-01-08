@@ -1,6 +1,7 @@
 streamlit
 openai
 langchain
+langchain-ollama
 langchain-openai
 pandas
 docling
