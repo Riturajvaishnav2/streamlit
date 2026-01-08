@@ -18,6 +18,7 @@ from src.core.config import (
     DEFAULT_OPENAI_API_KEY,
     DEFAULT_OPENAI_MODEL,
 )
+from src.core.qdrant import _qdrant_status
 from src.core.state import _init_state
 from src.ui.components import _render_prompt_manager
 from src.ui.steps import (
@@ -102,6 +103,13 @@ def main() -> None:
             "pair_prompt_versions",
             "active_pair_prompt_id",
         )
+        st.divider()
+        st.subheader("Qdrant Status")
+        st.caption(
+            "History storage uses OpenAI embeddings; set OPENAI_API_KEY to enable."
+        )
+        if st.button("Check Qdrant"):
+            st.json(_qdrant_status())
 
     _render_step_upload()
     _render_step_common_json(

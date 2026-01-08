@@ -22,6 +22,24 @@ def _get_qdrant_client() -> Optional[Any]:
     return QdrantClient(url=qdrant_url, api_key=api_key)
 
 
+# Report Qdrant connection status and collections.
+def _qdrant_status() -> Dict[str, Any]:
+    import os
+
+    qdrant_url = os.getenv("QDRANT_URL", "").strip()
+    if not qdrant_url:
+        return {"available": False, "error": "QDRANT_URL is not set."}
+    client = _get_qdrant_client()
+    if not client:
+        return {"available": False, "error": "Qdrant client could not be created."}
+    try:
+        collections = client.get_collections().collections
+    except Exception as exc:
+        return {"available": False, "error": str(exc), "url": qdrant_url}
+    names = [c.name for c in collections]
+    return {"available": True, "url": qdrant_url, "collections": names}
+
+
 # Inspect a Qdrant collection vector size.
 def _collection_vector_size(client: Any, name: str) -> Optional[int]:
     try:
@@ -65,16 +83,34 @@ def _resolve_qdrant_collection(client: Any, vector_size: int) -> str:
 
 # Store prompt/response snippets in Qdrant for history.
 def _qdrant_upsert_history(
+    provider: str,
     api_key: str,
     agreement_key: str,
     prompt_version: str,
     role: str,
     content: str,
+    base_url: str = "",
+    model_name: str = "",
 ) -> None:
     client = _get_qdrant_client()
-    if not client or not api_key:
+    if not client:
         return
-    embeddings = OpenAIEmbeddings(api_key=api_key)
+    provider_key = provider.strip().lower()
+    if provider_key in {"local", "ollama"}:
+        try:
+            from langchain_ollama import OllamaEmbeddings
+        except Exception:
+            return
+        ollama_base_url = base_url.strip() or "http://localhost:11434"
+        embeddings = OllamaEmbeddings(model=model_name or "llama3.2", base_url=ollama_base_url)
+    else:
+        if not api_key:
+            import os
+
+            api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        if not api_key:
+            return
+        embeddings = OpenAIEmbeddings(api_key=api_key)
     vector = embeddings.embed_query(content)
     collection_name = _resolve_qdrant_collection(client, len(vector))
     _ensure_qdrant_collection(client, collection_name, len(vector))

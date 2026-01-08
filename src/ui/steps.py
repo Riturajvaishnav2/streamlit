@@ -167,13 +167,16 @@ def _render_step_pairs(
         st.write("Actions")
         if st.button("Generate Pair Output"):
             st.session_state.pair_chat[idx] = user_note
-            if user_note.strip() and provider.strip().lower() == "openai" and api_key:
+            if user_note.strip():
                 _qdrant_upsert_history(
+                    provider,
                     api_key,
                     agreement_key,
                     pair_prompt_id,
                     "user",
                     user_note,
+                    base_url=base_url,
+                    model_name=model_name,
                 )
             st.session_state.pair_outputs[idx] = _generate_pair_output(
                 provider,
@@ -188,6 +191,17 @@ def _render_step_pairs(
             if not st.session_state.md_text:
                 st.warning("Upload and convert a file before regenerating.")
             else:
+                if user_note.strip():
+                    _qdrant_upsert_history(
+                        provider,
+                        api_key,
+                        "common-json",
+                        "common_prompt",
+                        "user",
+                        user_note,
+                        base_url=base_url,
+                        model_name=model_name,
+                    )
                 st.session_state.common_json = _generate_common_json(
                     provider,
                     api_key,
