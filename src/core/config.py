@@ -30,7 +30,14 @@ DEFAULT_COMMON_PROMPT = """You are an expert data extraction assistant.
 Given the Markdown content, extract a common JSON in the exact schema below.
 Use YYYYMMDD for dates and numeric values with up to 10 decimal places. If a field
 is unknown, use null where allowed. The agreements array can contain multiple items.
-Return ONLY valid JSON with the following schema:
+Allowed values:
+- direction: TI or TO
+- currency: EUR, USD, PLN, AED, or null
+- moc.voice[].zone and moc.video[].zone: NATIONAL, BACK_HOME, ROW, PREMIUM, SATELLITE, VAS
+- moc.voice[].video: INCLUDED, EXCLUDED, or VIDEO_RATES
+- mtc.video: INCLUDED or EXCLUDED
+Return ONLY valid JSON. Do not wrap the response in code fences or add commentary.
+Schema:
 {
   "metadata": {
     "source_filename": "DISCOUNT_IOT",
@@ -40,12 +47,12 @@ Return ONLY valid JSON with the following schema:
     {
       "client": "XXXXX",
       "partner": "YYYYY",
-      "direction": "TI | TO",
+      "direction": "TI",
       "validity": {
         "start_date": "YYYYMMDD",
         "end_date": "YYYYMMDD"
       },
-      "currency": "EUR | USD | PLN | AED | null",
+      "currency": "EUR",
       "services": {
         "gprs": {
           "rate_per_mb": 0.0000000000,
@@ -53,30 +60,26 @@ Return ONLY valid JSON with the following schema:
         },
         "sms": {
           "mo": { "rate_per_event": 0.0000000000 },
-          "mt": { "rate_per_event": 0.0000000000 } | null
+          "mt": null
         },
         "moc": {
           "voice": [
             {
-              "zone": "NATIONAL | BACK_HOME | ROW | PREMIUM | SATELLITE | VAS",
+              "zone": "NATIONAL",
               "rate_per_min": 0.0000000000,
               "charging_interval_sec": 0,
-              "video": "INCLUDED | EXCLUDED | VIDEO_RATES"
+              "video": "EXCLUDED"
             }
           ],
           "video": [
             {
-              "zone": "NATIONAL | BACK_HOME | ROW | PREMIUM | SATELLITE | VAS",
+              "zone": "NATIONAL",
               "rate_per_min": 0.0000000000,
               "charging_interval_sec": 0
             }
           ]
         },
-        "mtc": {
-          "rate_per_min": 0.0000000000,
-          "charging_interval_sec": 0,
-          "video": "INCLUDED | EXCLUDED"
-        } | null
+        "mtc": null
       }
     }
   ]
@@ -88,8 +91,15 @@ DEFAULT_PAIR_PROMPT = """You are an expert mapping assistant.
 Given one client-partner pair and the discount agreement, generate the output JSON
 in the exact schema below. Use YYYYMMDD for dates and numeric values with up to 10
 decimal places. If a field is unknown, use null where allowed.
-if end date is null or not exits or undefine put 2099/12/31.
-Return ONLY valid JSON with the following schema:
+If end_date is null or missing, set it to 20991231.
+Allowed values:
+- direction: TI or TO
+- currency: EUR, USD, PLN, AED, or null
+- moc.voice[].zone and moc.video[].zone: NATIONAL, BACK_HOME, ROW, PREMIUM, SATELLITE, VAS
+- moc.voice[].video: INCLUDED, EXCLUDED, or VIDEO_RATES
+- mtc.video: INCLUDED or EXCLUDED
+Return ONLY valid JSON. Do not wrap the response in code fences or add commentary.
+Schema:
 {
   "metadata": {
     "source_filename": "DISCOUNT_IOT",
@@ -99,12 +109,12 @@ Return ONLY valid JSON with the following schema:
     {
       "client": "XXXXX",
       "partner": "YYYYY",
-      "direction": "TI | TO",
+      "direction": "TI",
       "validity": {
         "start_date": "YYYYMMDD",
         "end_date": "YYYYMMDD"
       },
-      "currency": "EUR | USD | PLN | AED | null",
+      "currency": "EUR",
       "services": {
         "gprs": {
           "rate_per_mb": 0.0000000000,
@@ -112,30 +122,26 @@ Return ONLY valid JSON with the following schema:
         },
         "sms": {
           "mo": { "rate_per_event": 0.0000000000 },
-          "mt": { "rate_per_event": 0.0000000000 } | null
+          "mt": null
         },
         "moc": {
           "voice": [
             {
-              "zone": "NATIONAL | BACK_HOME | ROW | PREMIUM | SATELLITE | VAS",
+              "zone": "NATIONAL",
               "rate_per_min": 0.0000000000,
               "charging_interval_sec": 0,
-              "video": "INCLUDED | EXCLUDED | VIDEO_RATES"
+              "video": "EXCLUDED"
             }
           ],
           "video": [
             {
-              "zone": "NATIONAL | BACK_HOME | ROW | PREMIUM | SATELLITE | VAS",
+              "zone": "NATIONAL",
               "rate_per_min": 0.0000000000,
               "charging_interval_sec": 0
             }
           ]
         },
-        "mtc": {
-          "rate_per_min": 0.0000000000,
-          "charging_interval_sec": 0,
-          "video": "INCLUDED | EXCLUDED"
-        } | null
+        "mtc": null
       }
     }
   ]
